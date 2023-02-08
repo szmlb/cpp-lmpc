@@ -4,9 +4,6 @@ using namespace Eigen;
 
 namespace CppLmpc{
 
-    CppControl::CppControl(){};
-    CppControl::~CppControl(){};
-
     int CppControl::factorial(int n){
         if(n <= 1)
             return 1;

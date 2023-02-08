@@ -4,7 +4,54 @@ using namespace Eigen;
 
 namespace CppLmpc{
 
-    CppLmpc::CppLmpc(){};
+    CppLmpc::CppLmpc(double sampling_time, const MatrixXd& Ac, const MatrixXd& Bc, const MatrixXd& Cc, const MatrixXd& Dc, int Hp, int Hu, int Hw)
+    : sampling_time_(sampling_time),
+    Ac_(Ac),
+    Bc_(Bc),
+    Cc_(Cc),
+    Dc_(Dc),
+    Hp_(Hp), 
+    Hu_(Hu), 
+    Hw_(Hw)
+    {
+        MatrixXd Ad;
+        MatrixXd Bd;
+        MatrixXd Cd = Cc_;
+        MatrixXd Dd = Dc_;
+        CppControl::c2d(Ac, Bc_, sampling_time_, Ad, Bd);
+
+        Ap_ = calcAp(Ad, Hp_, Hw_);
+        Bp1_ = calcBp1(Ad, Bd, Hp_, Hw_, Hu_);
+        Bp2_ = calcBp2(Ad, Bd, Hp_, Hw_, Hu_);
+        Cp_ = calcCp(Ad, Bd, Cd, Hp_, Hw_);
+
+        // Phi, Psi, Theta
+        Phi_ = Cp_ * Ap_;
+        Psi_ = Cp_ * Bp1_;
+        Theta_ = Cp_ * Bp2_;
+
+        //W_ = calcInputRateIneqMat_1(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+        //w_ = calcInputRateIneqMat_2(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+
+        F_ = calcInputIneqMatF(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+        F1_ = calcInputIneqMatF1(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+        f_ = calcInputIneqVecf(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+
+        Gamma_ = calcOutputIneqMat(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hp_);
+        gamma_ = calcOutputIneqVec(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hp_);
+
+        /*
+        H_ = calcStateIneqMat_1(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Bd.rows(), Hp_);
+        eta_ = calcStateIneqMat_2(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Bd.rows(), Hp_);
+
+        Tau_ = MatrixXd::Zero(Hp_-Hw_, 1); // Tr
+        Bstate_ = Bp2_;
+        Hess_ = Theta_.transpose() * Q * Theta_ + Bstate_.transpose() * S_ * Bstate_ + R_;
+        Gineq_ = Gamma_ * Theta_;
+        Hineq_ = H_ * Bp2_;
+        */
+    };
+
     CppLmpc::~CppLmpc(){};
 
     MatrixXd CppLmpc::pow(const MatrixXd& A, int n){
