@@ -10,8 +10,8 @@ namespace CppLmpc{
     Bc_(Bc),
     Cc_(Cc),
     Dc_(Dc),
-    Hp_(Hp), 
-    Hu_(Hu), 
+    Hp_(Hp),
+    Hu_(Hu),
     Hw_(Hw)
     {
         MatrixXd Ad;
@@ -276,6 +276,30 @@ namespace CppLmpc{
             f(i * 2 + 1) = u_min;
         }
         return f;
+    }
+
+    MatrixXd calcInputRateIneqMatW(double du_max, double du_min, int Hu){
+        // For a scalar input rate constraints
+        //W * u <= w
+        //W = [W1 W2 ... Whu],  w : scalar value
+        MatrixXd W = MatrixXd::Zero(Hu*2, Hu);
+        for (int i = 0;  i < Hu; i++){// i = 0:Hp-Hw
+            W(i * 2, i) = 1.0;
+            W(i * 2 + 1, i) = -1.0;
+        }
+        return W;
+    }
+
+    MatrixXd calcInputRateIneqMatVecw(double du_max, double du_min, int Hu){
+        // For a scalar input rate constraints
+        //W * u <= w
+        //W = [W1 W2 ... Whu],  w : scalar value
+        MatrixXd w = MatrixXd::Zero(Hu*2, 1);
+        for (int i = 0;  i < Hu; i++){// i = 0:Hp-Hw
+            w(i * 2) = du_max;
+            w(i * 2 + 1) = -du_min;
+        }
+        return w;
     }
 
     MatrixXd CppLmpc::calcOutputIneqMat(double z_max, double z_min, int Hp){

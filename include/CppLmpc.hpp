@@ -58,6 +58,8 @@ namespace CppLmpc{
         MatrixXd calcInputIneqMatF(double u_max, double u_min, int Hu);
         MatrixXd calcInputIneqMatF1(double u_max, double u_min, int Hu);
         MatrixXd calcInputIneqVecf(double u_max, double u_min, int Hu);
+        MatrixXd calcInputRateIneqMatW(double du_max, double du_min, int Hu);
+        MatrixXd calcInputRateIneqMatVecw(double du_max, double du_min, int Hu);
         MatrixXd calcOutputIneqMat(double z_max, double z_min, int Hp);
         MatrixXd calcOutputIneqVec(double z_max, double z_min, int Hp);
         MatrixXd calcStateIneqMat(const MatrixXd& x_max, const MatrixXd& x_min, int xdim, int Hp);
