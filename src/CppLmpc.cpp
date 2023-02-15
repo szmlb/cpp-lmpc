@@ -30,26 +30,29 @@ namespace CppLmpc{
         Psi_ = Cp_ * Bp1_;
         Theta_ = Cp_ * Bp2_;
 
-        //W_ = calcInputRateIneqMat_1(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
-        //w_ = calcInputRateIneqMat_2(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+        W_ = calcInputRateIneqMat(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hu_);
+        w_ = calcInputRateIneqVec(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hu_);
 
-        F_ = calcInputIneqMatF(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
-        F1_ = calcInputIneqMatF1(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
-        f_ = calcInputIneqVecf(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hu_);
+        F_ = calcInputIneqMatF(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hu_);
+        F1_ = calcInputIneqMatF1(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hu_);
+        f_ = calcInputIneqVec(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hu_);
 
-        Gamma_ = calcOutputIneqMat(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hp_);
-        gamma_ = calcOutputIneqVec(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Hp_);
+        Gamma_ = calcOutputIneqMat(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hp_);
+        gamma_ = calcOutputIneqVec(std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), Hp_);
 
-        /*
-        H_ = calcStateIneqMat_1(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Bd.rows(), Hp_);
-        eta_ = calcStateIneqMat_2(std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), Bd.rows(), Hp_);
+        int xdim = Bd.rows();
+        H_ = calcStateIneqMat(VectorXd::Ones(xdim) * std::numeric_limits<double>::max(), VectorXd::Ones(xdim) * std::numeric_limits<double>::min(), xdim, Hp_);
+        eta_ = calcStateIneqVec(VectorXd::Ones(xdim) * std::numeric_limits<double>::max(), VectorXd::Ones(xdim) * std::numeric_limits<double>::min(), xdim, Hp_);
+
+        Q_ = MatrixXd::Identity(Hp_-Hw_, Hp_-Hw_);
+        R_ = MatrixXd::Identity(Hu_, Hu_);
+        S_ = MatrixXd::Identity(Hu_ * Bd.rows(), Hu_ * Bd.rows());
 
         Tau_ = MatrixXd::Zero(Hp_-Hw_, 1); // Tr
         Bstate_ = Bp2_;
-        Hess_ = Theta_.transpose() * Q * Theta_ + Bstate_.transpose() * S_ * Bstate_ + R_;
+        Hess_ = Theta_.transpose() * Q_ * Theta_ + Bstate_.transpose() * S_ * Bstate_ + R_;
         Gineq_ = Gamma_ * Theta_;
         Hineq_ = H_ * Bp2_;
-        */
     };
 
     CppLmpc::~CppLmpc(){};
@@ -265,7 +268,7 @@ namespace CppLmpc{
         return F1;
     }
 
-    MatrixXd CppLmpc::calcInputIneqVecf(double u_max, double u_min, int Hu){
+    MatrixXd CppLmpc::calcInputIneqVec(double u_max, double u_min, int Hu){
         // For a scalar input constraints
         //F * u <= 0
         //F = [F1 F2 ... Fhu],  F' = [F1' F2' ... Fhu']
@@ -278,7 +281,7 @@ namespace CppLmpc{
         return f;
     }
 
-    MatrixXd calcInputRateIneqMatW(double du_max, double du_min, int Hu){
+    MatrixXd calcInputRateIneqMat(double du_max, double du_min, int Hu){
         // For a scalar input rate constraints
         //W * u <= w
         //W = [W1 W2 ... Whu],  w : scalar value
@@ -290,7 +293,7 @@ namespace CppLmpc{
         return W;
     }
 
-    MatrixXd calcInputRateIneqMatVecw(double du_max, double du_min, int Hu){
+    MatrixXd calcInputRateIneqVec(double du_max, double du_min, int Hu){
         // For a scalar input rate constraints
         //W * u <= w
         //W = [W1 W2 ... Whu],  w : scalar value
@@ -324,7 +327,7 @@ namespace CppLmpc{
         return gamma;
     }
 
-    MatrixXd CppLmpc::calcStateIneqMat(const MatrixXd& x_max, const MatrixXd& x_min, int xdim, int Hp){
+    MatrixXd CppLmpc::calcStateIneqMat(const VectorXd& x_max, const VectorXd& x_min, int xdim, int Hp){
         //H * X[k] + η <= 0
         //x_max = [x1_max x2_max ... xn_max]^T
         //x_min = [x1_min x2_min ... xn_min]^T
@@ -335,8 +338,8 @@ namespace CppLmpc{
             H_p(i * 2 + 1, i) = -1.0;
         }
         for (int i = 0;  i < xdim; i++){// i = 0:Hp-Hw
-            h(i * 2) = -x_max(i,  0);
-            h(i * 2 + 1) = x_min(i,  0);
+            h(i * 2) = -x_max(i);
+            h(i * 2 + 1) = x_min(i);
         }
 
         //HP
@@ -373,7 +376,7 @@ namespace CppLmpc{
         return H_P;
     }
 
-    MatrixXd CppLmpc::calcStateIneqVec(const MatrixXd& x_max, const MatrixXd& x_min, int xdim, int Hp){
+    MatrixXd CppLmpc::calcStateIneqVec(const VectorXd& x_max, const VectorXd& x_min, int xdim, int Hp){
         //H * X[k] + η <= 0
         //x_max = [x1_max x2_max ... xn_max]^T
         //x_min = [x1_min x2_min ... xn_min]^T
@@ -384,8 +387,8 @@ namespace CppLmpc{
             H_p(i * 2 + 1, i) = -1.0;
         }
         for (int i = 0;  i < xdim; i++){// i = 0:Hp-Hw
-            h(i * 2) = -x_max(i,  0);
-            h(i * 2 + 1) = x_min(i,  0);
+            h(i * 2) = -x_max(i);
+            h(i * 2 + 1) = x_min(i);
         }
 
         //HP

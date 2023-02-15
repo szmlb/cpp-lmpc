@@ -42,6 +42,8 @@ namespace CppLmpc{
         MatrixXd H_;
         MatrixXd eta_;
 
+        MatrixXd Q_, R_, S_;
+
         MatrixXd Tau_;
         MatrixXd Bstate_;
         MatrixXd Hess_;
@@ -57,13 +59,13 @@ namespace CppLmpc{
         MatrixXd calcCp(const MatrixXd& Ad, const MatrixXd& Bd, const MatrixXd& Cd, int Hp, int Hw);
         MatrixXd calcInputIneqMatF(double u_max, double u_min, int Hu);
         MatrixXd calcInputIneqMatF1(double u_max, double u_min, int Hu);
-        MatrixXd calcInputIneqVecf(double u_max, double u_min, int Hu);
-        MatrixXd calcInputRateIneqMatW(double du_max, double du_min, int Hu);
-        MatrixXd calcInputRateIneqMatVecw(double du_max, double du_min, int Hu);
+        MatrixXd calcInputIneqVec(double u_max, double u_min, int Hu);
+        MatrixXd calcInputRateIneqMat(double du_max, double du_min, int Hu);
+        MatrixXd calcInputRateIneqVec(double du_max, double du_min, int Hu);
         MatrixXd calcOutputIneqMat(double z_max, double z_min, int Hp);
         MatrixXd calcOutputIneqVec(double z_max, double z_min, int Hp);
-        MatrixXd calcStateIneqMat(const MatrixXd& x_max, const MatrixXd& x_min, int xdim, int Hp);
-        MatrixXd calcStateIneqVec(const MatrixXd& x_max, const MatrixXd& x_min, int xdim, int Hp);
+        MatrixXd calcStateIneqMat(const VectorXd& x_max, const VectorXd& x_min, int xdim, int Hp);
+        MatrixXd calcStateIneqVec(const VectorXd& x_max, const VectorXd& x_min, int xdim, int Hp);
     };
 
 }
